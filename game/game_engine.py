@@ -5,106 +5,99 @@ from rules import Rules
 class Game:
     def __init__(self):
         self.deck = Deck()
-        self.players = {0: [], 1: []}  # 0 = human, 1 = bot
-        self.current_player = 0
+        self.players = {}
         self.direction = 1
+        self.turn_order = []
+        self.current_player_idx = 0
+        self.current_player = 0
         self.played_cards = []
-        self.initialize_hands()
-
-    def initialize_hands(self):
-        for pid in self.players:
-            self.players[pid] = [self.deck.draw_card() for _ in range(7)]
-        first_card = self.deck.draw_card()
-        while first_card[1:] in ["W", "WR"]:  # Avoid wilds as first card
-            self.deck.cards.append(first_card)
-            random.shuffle(self.deck.cards)
-            first_card = self.deck.draw_card()
-        self.played_cards.append(first_card)
 
     def next_turn(self):
-        self.current_player = (self.current_player + 1) % 2
+        self.current_player_idx = (self.current_player_idx + self.direction) % len(self.turn_order)
+        self.current_player = self.turn_order[self.current_player_idx]
 
     def skip_turn(self):
-        """Skip the next player's turn."""
         self.next_turn()
         self.next_turn()
 
     def reverse_turn_order(self):
-        """Reverse the direction of turns."""
         self.direction *= -1
+        self.turn_order.reverse()
+        self.current_player_idx = len(self.turn_order) - 1 - self.current_player_idx
 
     def next_player_draw(self, num_cards):
-        """Make the next player draw a specific number of cards."""
-        next_player = (self.current_player + self.direction) % len(self.players)
+        next_index = (self.current_player_idx + self.direction) % len(self.turn_order)
+        next_player = self.turn_order[next_index]
+
         for _ in range(num_cards):
-            self.players[next_player].append(self.deck.draw_card())
-            
+            if not self.deck.cards:
+                self.reshuffle_deck()
+
+            card = self.deck.draw_card()
+            if card:
+                self.players[next_player].receive_cards([card])
+            else:
+                print(f"⚠️ Could not draw a card for Player {next_player} — deck still empty after reshuffle.")
+
     def check_winner(self):
-        """Check if a player has won the game."""
-        for player, hand in self.players.items():
-            if not hand:
-                print(f"Player {player} wins!")
-                return True
-        return False
+        for pid, bot in self.players.items():
+            if not bot.hand:
+                print(f"🏆 Player {pid} wins!")
+                return pid
+        return None
 
-    def get_game_state(self):
-        """Returns the game state with player card counts."""
-        return {
-            "player_card_counts": {player: len(hand) for player, hand in self.players.items()},
-            "current_player": self.current_player,
-            "top_card": self.played_cards[-1],
-            "direction": "clockwise" if self.direction == 1 else "counterclockwise"
-        }
-
-    def play_turn(self, player, player_move=None, agent=None):
-        """Handle a player's move."""
-        if player != self.current_player:
-            print("Not your turn!")
-            return
-
-        if player_move and Rules.is_valid_move(player_move, self.played_cards[-1]):
-            self.played_cards.append(player_move)
-            self.players[player].remove(player_move)
-            Rules.apply_card_effect(player_move, self, agent)
-            if not self.check_winner():
-                self.next_turn()
+    def reshuffle_deck(self):
+        if len(self.played_cards) > 1:
+            print("♻️ Deck empty — reshuffling played cards...")
+            self.deck.reset_deck(self.played_cards)
         else:
-            print("No valid moves, drawing a card...")
+            print("⚠️ Not enough cards to reshuffle.")
+
+    def play_turn(self, player_id, player_move=None, agent=None):
+        if player_id != self.current_player:
+            print("Not your turn!")
+            return None
+
+        bot = self.players[player_id]
+        top_card = self.played_cards[-1]
+
+        if player_move:
+            if Rules.is_valid_move(player_move, top_card):
+                bot.remove_card(player_move)
+                self.played_cards.append(player_move)
+                if len(bot.hand) == 1:
+                    print(f"⚠ Player {player_id} has UNO!")
+                Rules.apply_card_effect(player_move, self, player_id)
+
+                winner = self.check_winner()
+                if winner is not None:
+                    return winner  # 🔁 Exit early if win
+
+                self.next_turn()
+            else:
+                print("Invalid move. Turn forfeited.")
+                self.next_turn()
+
+        else:
+            if not self.deck.cards:
+                self.reshuffle_deck()
             drawn_card = self.deck.draw_card()
-            self.players[player].append(drawn_card)
-            if Rules.is_valid_move(drawn_card, self.played_cards[-1]):
-                print(f"You drew {drawn_card}, and it can be played!")
+            if drawn_card:
+                bot.receive_cards([drawn_card])
+                print(f"Player {player_id} draws {drawn_card}")
+
+                if Rules.is_valid_move(drawn_card, top_card):
+                    print(f"Player {player_id} plays drawn card: {drawn_card}")
+                    bot.remove_card(drawn_card)
+                    self.played_cards.append(drawn_card)
+                    if len(bot.hand) == 1:
+                        print(f"⚠ Player {player_id} has UNO!")
+                    Rules.apply_card_effect(drawn_card, self, player_id)
+
+                    winner = self.check_winner()
+                    if winner is not None:
+                        return winner
+
             self.next_turn()
 
-    
-    def prompt_color_choice(self,action, agent):
-        # chosen_color = input("Choose a color [R, G, B, Y]: ").strip().upper()
-        chosen_color = agent.choose_color()
-        print(self.players[self.current_player], "choose color")
-        while chosen_color not in {'R', 'G', 'B', 'Y'}:
-            # chosen_color = input("Invalid color. Choose from [R, G, B, Y]: ").strip().upper()
-            chosen_color = agent.choose_color()
-        self.set_next_color(chosen_color,action)
-
-    
-    def set_next_color(self, color, action):
-        print(action + color, "color+action")
-        self.played_cards[-1] = action + color  # <- correctly update top card
-        print(self.played_cards[-1], "current top card")
-        print(f"Color changed to {color}")
-
-    
-    def draw_card(self, player_name):
-        if self.turn_order[self.current_player_idx] != player_name:
-            return {'error': 'Not your turn'}
-        drawn_card = self.deck.draw_card()
-        self.players[player_name].append(drawn_card)
-        self.next_turn()
-        return {'message': 'Card drawn', 'card': drawn_card}
-
-# Example Usage
-if __name__ == "__main__":
-    game = Game()
-    print("Initial Player Hands:", game.get_game_state())
-    # game.played_cards.append(game.deck.draw_card())  used it for just testing something
-    print("Top Card:", game.played_cards[-1], game.played_cards)
+        return None  # Default

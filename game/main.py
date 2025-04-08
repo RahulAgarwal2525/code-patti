@@ -1,69 +1,55 @@
-print("✅ main.py started")
-
 from game_engine import Game
-from bot import Bot
-from rules import Rules
-from playerSubmitted import Player  # <- Import player submission
+from playerBot import Player as PlayerBot
+from practice_bot import PracticeBot
+
 
 def main():
     game = Game()
-    bot = Bot(player_id=1)
-    player = Player(player_id=0)  # <- Create instance of player code
+
+    bots = {
+        0: PlayerBot(0),
+        1: PracticeBot(1),
+        2: PracticeBot(2),
+        3: PracticeBot(3)
+    }
+
+    for pid, bot in bots.items():
+        bot.receive_cards([game.deck.draw_card() for _ in range(7)])
+        game.players[pid] = bot
+
+    game.turn_order = list(bots.keys())
+    game.current_player = game.turn_order[0]
+    game.played_cards.append(game.deck.draw_card())
+    print(f"Game Start — Top card: {game.played_cards[-1]}")
+
+    round_counter = 0
     while True:
-        state = game.get_game_state()
-        current_player = state["current_player"]
-        top_card = state["top_card"]
+        current_player = game.current_player
+        bot = game.players[current_player]
+        top_card = game.played_cards[-1]
 
-        print("\n---------------------------")
-        print(f"Top card on pile: {top_card}")
-        print(f"Your cards: {game.players[0]}")
-        print(f"Bot has {len(game.players[1])} cards.")
+        print(f"\n🔁 Turn: Player {current_player} — Hand: {bot.hand}")
+        print(f"Top Card: {top_card}")
 
-        if current_player == 0:
-            # Use player's bot logic
-            player_move = player.choose_card(game.players[0], top_card)
-            print(f"Player plays: {player_move if player_move else 'draws a card'}")
-            if player_move:
-                game.play_turn(0, player_move, player)
-            else:
-                game.play_turn(0)
-
-            #human game 
-            # top_card = game.played_cards[-1] if game.played_cards else None
-
-            # move = input("Enter the card to play (or 'draw' to pick a card): ").strip().upper()
-
-            # if move == "DRAW":
-            #     drawn_card = game.deck.draw_card()
-            #     player_hand.append(drawn_card)
-            #     print(f"Player {current_player} drew {drawn_card}.")
-            #     if game.play_turn(0, move, player):  # try to play drawn card
-            #         continue
-            #     else:
-            #         print("No playable card drawn. Turn ends.")
-
-            # elif move in player_hand:
-            #     success = game.play_turn(0, move, player)
-            #     if not success:
-            #         print("Invalid move. Card cannot be played.")
-            #     else:
-            #         continue
-            # else:
-            #     print("Invalid input! Try again.")
-            #     continue
-
+        move = bot.choose_card(top_card)
+        if move:
+            print(f"Player {current_player} plays: {move}")
+            winner = game.play_turn(current_player, move, bot)
+            if winner is not None:
+                print(f"🏁 Game Over — Player {winner} wins!")
+                break
         else:
-            # Predefined bot turn
-            bot_move = bot.choose_card(game.players[1], top_card)
-            print(f"Bot plays: {bot_move if bot_move else 'draws a card'}")
-            if bot_move:
-                game.play_turn(1, bot_move, bot)
-            else:
-                game.play_turn(1)
+            print(f"Player {current_player} has no move, drawing...")
+            winner = game.play_turn(current_player, None, bot)
+            if winner is not None:
+                print(f"🏁 Game Over — Player {winner} wins!")
+                break
 
-        # Check for winner
-        if game.check_winner():
+        round_counter += 1
+        if round_counter > 500:
+            print("❌ Game stopped after 500 turns — possible bot deadlock.")
             break
+
 
 if __name__ == "__main__":
     main()

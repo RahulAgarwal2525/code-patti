@@ -1,7 +1,7 @@
 import random
 
 
-def initialize_deck():
+def _initialize_deck():
     colors = ['R', 'G', 'B', 'Y']
     numbers = list(range(10))
     actions = ['S', 'R', 'P']
@@ -14,17 +14,16 @@ def initialize_deck():
         for action in actions:
             deck.extend([f"{color}{action}"] * 2)
 
-    wild_cards = ['WC', 'WC', 'WC', 'WC']
-    plus_four_cards = ['PC', 'PC', 'PC', 'PC']
-    deck.extend(wild_cards)
-    deck.extend(plus_four_cards)
+    wild_cards = ['WC']*4
+    plus_four_cards = ['PC']*4
+    deck.extend(wild_cards+plus_four_cards)
 
     return deck
 
 
 class Deck:
     def __init__(self):
-        self.cards = initialize_deck()
+        self.cards = _initialize_deck()
         random.shuffle(self.cards)
 
     def draw_card(self):
@@ -33,7 +32,7 @@ class Deck:
     def reset_deck(self, played_cards):
         """Shuffle played cards back into the deck, keeping the last card in play."""
         last_card = played_cards.pop()
-        self.cards = played_cards
+        self.cards = played_cards.copy()
         random.shuffle(self.cards)
         self.cards.insert(0, last_card)
 
