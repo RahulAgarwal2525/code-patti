@@ -28,6 +28,30 @@ def main():
             else:
                 game.play_turn(0)
 
+            #human game 
+            # top_card = game.played_cards[-1] if game.played_cards else None
+
+            # move = input("Enter the card to play (or 'draw' to pick a card): ").strip().upper()
+
+            # if move == "DRAW":
+            #     drawn_card = game.deck.draw_card()
+            #     player_hand.append(drawn_card)
+            #     print(f"Player {current_player} drew {drawn_card}.")
+            #     if game.play_turn(0, move, player):  # try to play drawn card
+            #         continue
+            #     else:
+            #         print("No playable card drawn. Turn ends.")
+
+            # elif move in player_hand:
+            #     success = game.play_turn(0, move, player)
+            #     if not success:
+            #         print("Invalid move. Card cannot be played.")
+            #     else:
+            #         continue
+            # else:
+            #     print("Invalid input! Try again.")
+            #     continue
+
         else:
             # Predefined bot turn
             bot_move = bot.choose_card(game.players[1], top_card)
