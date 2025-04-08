@@ -14,7 +14,7 @@ class Rules:
 
         def parse(c):
             if c[0] in ('W', 'P'):  # Wild or +4
-                return c[1:], c[0]
+                return c[1:], 0
             return c[0], c[1:]
 
         card_color, card_val = parse(card)
@@ -23,28 +23,45 @@ class Rules:
         return (
                 card_color == top_color or
                 card_val == top_val or
-                card_val in {"W", "P"}
+                card_color == 'W' or  # Wilds
+                card_color == 'P'  # +4s
         )
 
     @staticmethod
     def apply_card_effect(card, game_state, agent):
+        """
+        Apply the effect of action or wild cards to the game state.
+        Supports Skip (S), Reverse (R), Draw 2 (P), Wild (W), and Wild Draw 4 (PR, PB, etc.)
+        """
         if not card or not game_state:
             return
 
-        if card.endswith("S"):
-            game_state.skip_turn()
-        elif card.endswith("R"):
-            game_state.reverse_turn_order()
-        elif card.startswith("P") and len(card) == 2:
+        color = card[0]
+        value = card[1:]
+
+        # 🃏 Wild Color (e.g., 'WR', 'WB', etc.)
+        if color == "W":
+            print("🎨 Wild played.")
+            return
+
+        # 🃏 Wild Draw Four (e.g., 'PR', 'PG', etc.)
+        if color == "P":
             game_state.next_player_draw(4)
             game_state.skip_turn()
-            # Color is already encoded (e.g., "PG", "PR"), no need to prompt
-        elif card.endswith("P"):
+            print("🎯 Wild Draw 4 played — next player draws 4 cards and is skipped.")
+            return
+
+        # 🎨 Colored action cards (e.g., 'RS', 'RP', 'RR')
+        if value == "S":
+            game_state.skip_turn()
+            print("⏭️ Skip played — next player is skipped.")
+        elif value == "R":
+            game_state.reverse_turn_order()
+            print("🔁 Reverse played — turn direction reversed.")
+        elif value == "P":
             game_state.next_player_draw(2)
             game_state.skip_turn()
-        elif card.startswith("W") and len(card) == 2:
-            # Wild card already encoded (e.g., "WR", "WB")
-            pass
+            print("🎯 Draw 2 played — next player draws 2 cards and is skipped.")
 
     @staticmethod
     def is_special_card(card):

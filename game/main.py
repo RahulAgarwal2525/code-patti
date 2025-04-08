@@ -28,26 +28,26 @@ def main():
         bot = game.players[current_player]
         top_card = game.played_cards[-1]
 
-        print(f"\n🔁 Turn: Player {current_player} — Hand: {bot.hand}")
+        print(f"\n🔁 Turn: Player {current_player} — Hand({len(bot.hand)}): {bot.hand}")
         print(f"Top Card: {top_card}")
 
         move = bot.choose_card(top_card)
         if move:
-            print(f"Player {current_player} plays: {move} current direction: {game.dir}")
-            winner = game.play_turn(current_player, move, bot)
+            print(f"Player {current_player} plays: {move}")
+            winner = game.play_turn(current_player, move)
             if winner is not None:
                 print(f"🏁 Game Over — Player {winner} wins!")
                 break
         else:
             print(f"Player {current_player} has no move, drawing...")
-            winner = game.play_turn(current_player, None, bot)
+            winner = game.play_turn(current_player, None)
             if winner is not None:
                 print(f"🏁 Game Over — Player {winner} wins!")
                 break
 
         round_counter += 1
-        if round_counter > 5000:
-            print("❌ Game stopped after 500 turns — possible bot deadlock.")
+        if round_counter > 50:
+            print("❌ Game stopped after 1000 turns — possible bot deadlock.")
             break
 
 
