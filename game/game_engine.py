@@ -18,12 +18,9 @@ class Game:
 
     def skip_turn(self):
         self.next_turn()
-        self.next_turn()
 
     def reverse_turn_order(self):
         self.direction *= -1
-        self.turn_order.reverse()
-        self.current_player_idx = len(self.turn_order) - 1 - self.current_player_idx
 
     def next_player_draw(self, num_cards):
         next_index = (self.current_player_idx + self.direction) % len(self.turn_order)
@@ -53,7 +50,7 @@ class Game:
         else:
             print("⚠️ Not enough cards to reshuffle.")
 
-    def play_turn(self, player_id, player_move=None, agent=None):
+    def play_turn(self, player_id, player_move=None):
         if player_id != self.current_player:
             print("Not your turn!")
             return None
