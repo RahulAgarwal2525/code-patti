@@ -2,6 +2,7 @@ import random
 from deck import Deck
 from rules import Rules
 
+
 class Game:
     def __init__(self):
         self.deck = Deck()
@@ -60,7 +61,10 @@ class Game:
 
         if player_move:
             if Rules.is_valid_move(player_move, top_card):
-                bot.remove_card(player_move)
+                if player_move[0] in {'W', 'P'}:
+                    bot.remove_card(player_move[0]+'C')
+                else:
+                    bot.remove_card(player_move)
                 self.played_cards.append(player_move)
                 if len(bot.hand) == 1:
                     print(f"⚠ Player {player_id} has UNO!")

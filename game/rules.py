@@ -14,7 +14,7 @@ class Rules:
 
         def parse(c):
             if c[0] in ('W', 'P'):  # Wild or +4
-                return c[1:], 0
+                return c[1:], 10
             return c[0], c[1:]
 
         card_color, card_val = parse(card)
@@ -23,8 +23,7 @@ class Rules:
         return (
                 card_color == top_color or
                 card_val == top_val or
-                card_color == 'W' or  # Wilds
-                card_color == 'P'  # +4s
+                card[0] in {'W', 'P'}  # wilds & +4s
         )
 
     @staticmethod

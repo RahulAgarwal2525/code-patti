@@ -1,6 +1,7 @@
 from game_engine import Game
 from playerBot import Player as PlayerBot
 from practice_bot import PracticeBot
+import random
 
 
 def main():
@@ -19,7 +20,20 @@ def main():
 
     game.turn_order = list(bots.keys())
     game.current_player = game.turn_order[0]
-    game.played_cards.append(game.deck.draw_card())
+    # Draw initial top card (must not be a Wild, +4 or action card)
+    while True:
+        first_card = game.deck.draw_card()
+        if first_card and (
+                first_card[0] in ['R', 'G', 'B', 'Y'] and  # Valid color
+                first_card[1:].isdigit()  # Must be a number (not action)
+        ):
+            game.played_cards.append(first_card)
+            break
+        else:
+            # Put invalid card back and reshuffle
+            game.deck.cards.insert(0, first_card)
+            random.shuffle(game.deck.cards)
+
     print(f"Game Start — Top card: {game.played_cards[-1]}")
 
     round_counter = 0
@@ -46,7 +60,7 @@ def main():
                 break
 
         round_counter += 1
-        if round_counter > 50:
+        if round_counter > 1000:
             print("❌ Game stopped after 1000 turns — possible bot deadlock.")
             break
 
