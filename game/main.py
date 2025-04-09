@@ -60,7 +60,7 @@ def main():
                 break
 
         round_counter += 1
-        if round_counter > 1000:
+        if round_counter > 200:
             print("❌ Game stopped after 1000 turns — possible bot deadlock.")
             break
 
