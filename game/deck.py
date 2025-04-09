@@ -32,7 +32,16 @@ class Deck:
     def reset_deck(self, played_cards):
         """Shuffle played cards back into the deck, keeping the last card in play."""
         last_card = played_cards.pop()
-        self.cards = played_cards.copy()
+
+        def normalize(card):
+            if card.startswith("W") and len(card) == 2:
+                return "WC"
+            if card.startswith("P") and len(card) == 2:
+                return "PC"
+            return card
+
+        normalized = [normalize(card) for card in played_cards]
+        self.cards = normalized.copy()
         random.shuffle(self.cards)
         self.cards.insert(0, last_card)
 
