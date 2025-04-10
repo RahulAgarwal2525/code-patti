@@ -29,7 +29,7 @@ def main():
                                   |___/                                                                             |___/ """)
 
     bots = {
-        0: PracticeBot(0),
+        0: PlayerBot(0),
         1: PracticeBot(1),
         2: PracticeBot(2),
         3: PracticeBot(3)
